@@ -59,7 +59,7 @@ class KITTISource:
 
     #---------------------------------------------------------------------------
     def batch_generator(self, image_paths):
-        def gen_batch(batch_size):
+        def gen_batch(batch_size, names=False):
             road_color = np.array([255, 0, 255])
 
             random.shuffle(image_paths)
@@ -68,6 +68,8 @@ class KITTISource:
 
                 images = []
                 labels = []
+                names_images = []
+                names_labels = []
                 for image_file in files:
                     label_file = self.label_paths[os.path.basename(image_file)]
 
@@ -82,7 +84,16 @@ class KITTISource:
                     images.append(image.astype(np.float32))
                     labels.append(label_all)
 
-                yield np.array(images), np.array(labels)
+                    if names:
+                        names_images.append(image_file)
+                        names_labels.append(label_file)
+
+                if names:
+                    yield np.array(images), np.array(labels), \
+                          names_images, names_labels
+                else:
+                    yield np.array(images), np.array(labels)
+
         return gen_batch
 
 #-------------------------------------------------------------------------------
