@@ -21,7 +21,7 @@ def draw_labels(img, labels, label_colors, convert=True):
     for label in label_colors:
         label_mask = labels == label
         labels_colored[label_mask] = label_colors[label]
-    img = cv2.addWeighted(img, 1, labels_colored, 0.3, 0)
+    img = cv2.addWeighted(img, 1, labels_colored, 0.8, 0)
     if not convert:
         return img
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
