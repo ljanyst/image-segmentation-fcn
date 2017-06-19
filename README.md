@@ -14,7 +14,8 @@ Dataset so far. All you need to do to introduce a new dataset is to create a new
 `source_xxxxxx.py` file defining your dataset. The definition is a class that
 contains seven attributes:
 
- * `image_size` - self-evident
+ * `image_size` - self-evident, both horizontal and vertical dimention need to
+   be divisible by 32
  * `num_classes` - number of classes that the model is supposed to handle
  * `label_colors` - a dictionary mapping a class number to a color; used for
     blending of the classification results with input image
