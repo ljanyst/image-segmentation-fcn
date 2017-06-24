@@ -98,6 +98,10 @@ with tf.Session() as sess:
     validation_loss_summary_op = tf.summary.scalar('validation_loss',
                                                    validation_loss)
 
+    training_loss = tf.placeholder(tf.float32)
+    training_loss_summary_op = tf.summary.scalar('training_loss',
+                                                 training_loss)
+
     validation_img    = tf.placeholder(tf.float32, shape=[None, None, None, 3])
     validation_img_gt = tf.placeholder(tf.float32, shape=[None, None, None, 3])
     validation_img_summary_op = tf.summary.image('validation_img',
@@ -113,18 +117,21 @@ with tf.Session() as sess:
         #-----------------------------------------------------------------------
         generator = train_generator(args.batch_size)
         description = '[i] Epoch {:>2}/{}'.format(e+1, args.epochs)
+        training_loss_total = 0
         for x, y in tqdm(generator, total=n_train_batches,
                          desc=description, unit='batches'):
             feed = {net.image_input:  x,
                     labels:           y,
                     net.keep_prob:    0.5}
-            sess.run(optimizer, feed_dict=feed)
+            loss_batch, _ = sess.run([loss, optimizer], feed_dict=feed)
+            training_loss_total += loss_batch * x.shape[0]
+        training_loss_total /= source.num_training
 
         #-----------------------------------------------------------------------
         # Validate
         #-----------------------------------------------------------------------
         generator = valid_generator(args.batch_size)
-        loss_total = 0
+        validation_loss_total = 0
         imgs          = None
         img_labels    = None
         img_labels_gt = None
@@ -136,23 +143,26 @@ with tf.Session() as sess:
                                                           net.classes,
                                                           label_mapper],
                                                          feed_dict=feed)
-            loss_total += loss_batch * x.shape[0]
+            validation_loss_total += loss_batch * x.shape[0]
 
             if imgs is None:
                 imgs          = x[:3, :, :, :]
                 img_labels    = img_classes[:3, :, :]
                 img_labels_gt = y_mapped[:3, :, :]
 
-        loss_total = float(loss_total)/source.num_validation
+        validation_loss_total /= source.num_validation
 
         #-----------------------------------------------------------------------
         # Write loss summary
         #-----------------------------------------------------------------------
-        feed = {validation_loss: loss_total}
-        validation_loss_summary = sess.run(validation_loss_summary_op,
-                                           feed_dict=feed)
+        feed = {validation_loss: validation_loss_total,
+                training_loss:   training_loss_total}
+        loss_summary = sess.run([validation_loss_summary_op,
+                                 training_loss_summary_op],
+                                feed_dict=feed)
 
-        summary_writer.add_summary(validation_loss_summary, e)
+        summary_writer.add_summary(loss_summary[0], e)
+        summary_writer.add_summary(loss_summary[1], e)
 
         #-----------------------------------------------------------------------
         # Write image summary every 5 epochs
