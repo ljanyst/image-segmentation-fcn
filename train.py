@@ -34,6 +34,8 @@ parser.add_argument('--batch-size', type=int, default=20,
                     help='batch size')
 parser.add_argument('--tensorboard-dir', default="tb",
                     help='name of the tensorboard data directory')
+parser.add_argument('--checkpoint-interval', type=int, default=50,
+                    help='checkpoint interval')
 args = parser.parse_args()
 
 print('[i] Project name:         ', args.name)
@@ -43,6 +45,7 @@ print('[i] VGG directory:        ', args.vgg_dir)
 print('[i] # epochs:             ', args.epochs)
 print('[i] Batch size:           ', args.batch_size)
 print('[i] Tensorboard directory:', args.tensorboard_dir)
+print('[i] Checkpoint interval:  ', args.checkpoint_interval)
 
 try:
     print('[i] Creating directory {}...'.format(args.name))
@@ -181,7 +184,7 @@ with tf.Session() as sess:
         #-----------------------------------------------------------------------
         # Save a checktpoint
         #-----------------------------------------------------------------------
-        if (e+1) % 50 == 0:
+        if (e+1) % args.checkpoint_interval == 0:
             checkpoint = '{}/e{}.ckpt'.format(args.name, e+1)
             saver.save(sess, checkpoint)
             print('Checkpoint saved:', checkpoint)
